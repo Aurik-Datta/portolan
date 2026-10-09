@@ -91,7 +91,7 @@ def cmd_serve(a: argparse.Namespace) -> int:
 def cmd_eval(a: argparse.Namespace) -> int:
     from portolan.evals import format_table, run_eval
 
-    specs = a.specs or sorted(Path("evals").glob("*.json"))
+    specs = a.specs or sorted(p for p in Path("evals").glob("*.json") if p.name != "baseline.json")
     results = [run_eval(s, workdir=a.workdir) for s in specs]
     print(format_table(results))
     if a.write_baseline:

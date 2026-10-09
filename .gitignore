@@ -17,3 +17,4 @@ catalogs/*
 *.audit.jsonl
 portolan-audit.jsonl
 .env
+.DS_Store
