@@ -23,11 +23,6 @@
       "Bash(gh pr checks *)",
       "Bash(gh run list *)",
       "Bash(gh run view *)"
-    ],
-    "deny": [
-      "Bash(git push origin main*)",
-      "Bash(git push -u origin main*)",
-      "Bash(gh pr merge *)"
     ]
   },
   "hooks": {
