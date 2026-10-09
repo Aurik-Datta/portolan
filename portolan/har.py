@@ -19,10 +19,11 @@ import httpx
 STATIC_EXT = re.compile(r"\.(js|mjs|css|map|png|jpe?g|gif|svg|ico|webp|woff2?|ttf|eot|html?)$", re.I)
 
 # Paths that are almost always instrumentation rather than product behaviour.
-NOISE_PATH = re.compile(
-    r"/(telemetry|analytics|track(ing)?|collect|beacon|metrics|log(s|ging)?|events?|rum|sentry|_next/data)(/|$)",
-    re.I,
-)
+NOISE_PATH = re.compile(r"/(telemetry|analytics|track(ing)?|collect|beacon|rum|sentry|_next/data)(/|$)", re.I)
+
+# Paths that are instrumentation in some apps and real resources in others (calendar events,
+# audit logs, revenue metrics). Only noise when used fire-and-forget: a write that returns no data.
+MAYBE_NOISE_PATH = re.compile(r"/(metrics|log(s|ging)?|events?)(/|$)", re.I)
 
 
 @dataclass
@@ -91,11 +92,20 @@ def load_exchanges(path: str | Path) -> list[Exchange]:
     return out
 
 
+def _carries_data(value: Any) -> bool:
+    """False for empty bodies and bare acks like {"ok": true}."""
+    if isinstance(value, dict):
+        return any(v is not None and not isinstance(v, bool) for v in value.values())
+    return bool(value)
+
+
 def is_api_call(ex: Exchange) -> tuple[bool, str]:
     """Decide whether an exchange is product API traffic. Returns (keep, reason)."""
     if STATIC_EXT.search(ex.path):
         return False, "static asset"
     if NOISE_PATH.search(ex.path):
+        return False, "instrumentation"
+    if MAYBE_NOISE_PATH.search(ex.path) and ex.method != "GET" and not _carries_data(ex.response_json):
         return False, "instrumentation"
     if ex.status >= 400 or ex.status == 0:
         return False, f"status {ex.status}"

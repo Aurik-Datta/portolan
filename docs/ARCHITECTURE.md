@@ -19,10 +19,12 @@ embedded. The user drives. Output is a standard HAR 1.2 file. Scripted sessions 
 `testing/sessions.py` produce the same format in-process for fixtures.
 
 **2. Filter** (`har.py: is_api_call`). Keep JSON request/response pairs with status < 400. Drop
-static assets, HTML, and instrumentation paths (telemetry, analytics, beacons...).
+static assets, HTML, and instrumentation paths (telemetry, analytics, beacons...). Ambiguous
+names (`events`, `logs`, `metrics`) are only dropped for writes that return no data, since they
+are often real resources (calendar events, audit logs).
 
 **3. Templatize** (`compiler.py: templatize`). Replace id-like path segments (digits, UUIDs, hex,
-`POL-100234`-style slugs) with named params (`/policies/{policy_id}`). Param name comes from
+`POL-100234`-style slugs with a 3+ digit run, long mixed-case random tokens) with named params (`/policies/{policy_id}`). Param name comes from
 the preceding resource segment.
 
 **4. Group.** One operation per (method, path template). *Known gap:* RPC/GraphQL endpoints

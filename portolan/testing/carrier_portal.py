@@ -146,6 +146,12 @@ def create_app() -> FastAPI:
         await request.body()
         state["telemetry"] += 1
 
+    @app.post("/api/logs")
+    async def client_logs(request: Request) -> dict[str, bool]:
+        # The front end ships its console logs here: JSON in, bare ack out. Noise, despite being JSON.
+        await request.body()
+        return {"ok": True}
+
     @app.post("/api/auth/login")
     def login(body: LoginIn) -> dict[str, Any]:
         if USERS.get(body.username) != body.password:
@@ -183,6 +189,21 @@ def create_app() -> FastAPI:
             "items": [
                 {"document_id": f"DOC-{policy_number[-6:]}-1", "kind": "declarations", "format": "pdf"},
                 {"document_id": f"DOC-{policy_number[-6:]}-2", "kind": "pink_slip", "format": "pdf"},
+            ]
+        }
+
+    @app.get("/api/policies/{policy_number}/events")
+    def list_policy_events(policy_number: str, authorization: str | None = Header(None)) -> dict[str, Any]:
+        # A policy's activity history: a real resource whose name looks like telemetry.
+        require_auth(authorization)
+        policy = state["policies"].get(policy_number)
+        if policy is None:
+            raise HTTPException(404, "no such policy")
+        ref = policy_number[-6:]
+        return {
+            "items": [
+                {"event_id": f"EVT-{ref}-1", "type": "issued", "at": f"{policy['effective_date']}T09:00:00Z"},
+                {"event_id": f"EVT-{ref}-2", "type": "renewal_notice_sent", "at": "2026-11-15T09:00:00Z"},
             ]
         }
 

@@ -12,11 +12,12 @@
       {"key": "GET /api/policies", "risk": "read"},
       {"key": "GET /api/policies/{*}", "risk": "read"},
       {"key": "GET /api/policies/{*}/documents", "risk": "read"},
+      {"key": "GET /api/policies/{*}/events", "risk": "read"},
       {"key": "POST /api/quotes", "risk": "write"},
       {"key": "GET /api/quotes/{*}", "risk": "read"},
       {"key": "POST /api/quotes/{*}/bind", "risk": "irreversible"}
     ],
-    "must_not_include": ["/api/telemetry", "/api/auth/login", "/quotes/new", "/static/app.js", "/"]
+    "must_not_include": ["/api/telemetry", "/api/logs", "/api/auth/login", "/quotes/new", "/static/app.js", "/"]
   },
   "scenarios": [
     {
@@ -24,7 +25,8 @@
       "steps": [
         {"op": "GET /api/policies", "query": {"status": "active"}, "expect_status": 200, "expect_path": "items.0.policy_number"},
         {"op": "GET /api/policies/{*}", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200},
-        {"op": "GET /api/policies/{*}/documents", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200, "expect_path": "items.0.document_id"}
+        {"op": "GET /api/policies/{*}/documents", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200, "expect_path": "items.0.document_id"},
+        {"op": "GET /api/policies/{*}/events", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200, "expect_path": "items.0.event_id"}
       ]
     },
     {

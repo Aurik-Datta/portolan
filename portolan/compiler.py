@@ -24,7 +24,10 @@ from portolan.schema import infer_many, infer_scalar_from_strings, summarize
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 HEX = re.compile(r"^[0-9a-f]{16,}$", re.I)
 DIGITS = re.compile(r"^\d+$")
-SLUGGY_ID = re.compile(r"^(?=.*\d)[A-Za-z0-9_.~-]{5,}$")  # POL-100234, DOC-100234-1, abc123xyz
+# A digit alone doesn't make an id (v2beta, oauth2, 2fa-setup, x86_64): need a run of 3+ digits...
+SLUGGY_ID = re.compile(r"^(?=.*\d{3})[A-Za-z0-9_.~-]{5,}$")  # POL-100234, DOC-100234-1, abc123xyz
+# ...or a long random-looking token mixing cases and digits (nanoid, Firebase, YouTube-style ids).
+RANDOM_ID = re.compile(r"^(?=(?:.*\d){2})(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9_-]{10,}$")
 VERSION = re.compile(r"^v\d+(\.\d+)?$", re.I)
 
 PREFIX_SEGMENTS = {"api", "rest", "services", "service", "internal", "graphql"}
@@ -41,7 +44,11 @@ def is_id_segment(segment: str) -> bool:
     if VERSION.match(segment):
         return False
     return bool(
-        DIGITS.match(segment) or UUID.match(segment) or HEX.match(segment) or SLUGGY_ID.match(segment)
+        DIGITS.match(segment)
+        or UUID.match(segment)
+        or HEX.match(segment)
+        or SLUGGY_ID.match(segment)
+        or RANDOM_ID.match(segment)
     )
 
 

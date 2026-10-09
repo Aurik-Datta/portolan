@@ -3,6 +3,14 @@
 Short log of choices and why. Newest first. Add an entry for anything a future contributor
 might otherwise undo.
 
+## 2026-10-09: Narrow noise filter and id detection
+
+Context: the noise regex dropped real resources (`/api/events`, `/api/audit/logs`), and any
+segment with a digit was treated as an id (`oauth2`, `v2beta`, `2fa-setup`). Decision: `events`,
+`logs`, `metrics` are noise only on writes that return no data; ids need a 3+ digit run or a long
+mixed-case random token. Consequence: short random lowercase ids (`k3j9x2`) are no longer
+templated; variance-based templating (roadmap M1.5) is the real fix for those.
+
 ## 2026-10-09: Developer tool first, vertical later
 
 Context: the stress test found a horizontal "every app" platform has no moat and heavy

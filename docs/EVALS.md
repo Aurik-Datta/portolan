@@ -34,7 +34,7 @@ against it and flags regressions.
 
 | App | Pattern | Baseline | Notes |
 |---|---|---|---|
-| `carrier_portal` | REST, bearer token, UUID + slug ids, irreversible bind | 1.00 | the happy path |
+| `carrier_portal` | REST, bearer token, UUID + slug ids, irreversible bind, noise-like resource names (`/events`) vs real noise (`/api/logs`) | 1.00 | the happy path |
 | `legacy_erp` | RPC (`POST /rpc {method}`), cookie session + CSRF header, error envelopes | 0.20 | needs body discriminators |
 
 ## Patterns we still need fixtures for

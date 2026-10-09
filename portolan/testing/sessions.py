@@ -43,11 +43,13 @@ def record_carrier_portal_session(out: str | Path | None = None) -> HarWriter:
     policies = rec.get("/api/policies", params={"status": "active"}, headers=auth).json()["items"]
     rec.get("/api/policies", params={"status": "active", "page": 2}, headers=auth)
     beacon("policies")
+    rec.post("/api/logs", json={"level": "info", "message": "policies view rendered"})
 
     # Open two different policies so the compiler sees the id vary.
     for p in policies[:2]:
         rec.get(f"/api/policies/{p['policy_number']}", headers=auth)
         rec.get(f"/api/policies/{p['policy_number']}/documents", headers=auth)
+        rec.get(f"/api/policies/{p['policy_number']}/events", headers=auth)
 
     rec.get("/quotes/new")
 
