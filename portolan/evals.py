@@ -27,6 +27,7 @@ from portolan.compiler import compile_har
 from portolan.runtime import Executor, OperationError
 
 REF = re.compile(r"^\{\{steps\.(\d+)\.(.+)\}\}$")
+METRICS = ("recall", "precision", "risk", "auth", "scenarios", "score")
 
 
 def _load(target: str) -> Callable[..., Any]:
@@ -184,3 +185,17 @@ def format_table(results: list[EvalResult]) -> str:
             for item in items:
                 out.append(f"  [{r.app}] {label}: {item}")
     return "\n".join(out)
+
+
+def regressions(results: list[EvalResult], baseline: dict[str, dict[str, float]]) -> list[str]:
+    """Metrics that dropped below the accepted baseline. Apps not in the baseline yet are skipped."""
+    out = []
+    for r in results:
+        accepted = baseline.get(r.app)
+        if accepted is None:
+            continue
+        current = r.to_dict()
+        for metric in METRICS:
+            if metric in accepted and current[metric] < accepted[metric] - 1e-9:
+                out.append(f"{r.app}: {metric} {accepted[metric]:.2f} -> {current[metric]:.2f}")
+    return out

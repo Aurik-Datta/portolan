@@ -89,16 +89,21 @@ def cmd_serve(a: argparse.Namespace) -> int:
 
 
 def cmd_eval(a: argparse.Namespace) -> int:
-    from portolan.evals import format_table, run_eval
+    from portolan.evals import METRICS, format_table, regressions, run_eval
 
     specs = a.specs or sorted(p for p in Path("evals").glob("*.json") if p.name != "baseline.json")
     results = [run_eval(s, workdir=a.workdir) for s in specs]
     print(format_table(results))
     if a.write_baseline:
-        keep = ("recall", "precision", "risk", "auth", "scenarios", "score")
-        baseline = {r.app: {k: v for k, v in r.to_dict().items() if k in keep} for r in results}
+        baseline = {r.app: {k: v for k, v in r.to_dict().items() if k in METRICS} for r in results}
         Path(a.write_baseline).write_text(json.dumps(baseline, indent=2) + "\n")
         print(f"baseline written to {a.write_baseline}")
+    if a.check_baseline:
+        dropped = regressions(results, json.loads(Path(a.check_baseline).read_text()))
+        for line in dropped:
+            print(f"REGRESSION {line}", file=sys.stderr)
+        if dropped:
+            return 1
     return 0 if all(r.score >= a.min_score for r in results) else 1
 
 
@@ -188,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--workdir", default="evals/results")
     s.add_argument("--min-score", type=float, default=0.0)
     s.add_argument("--write-baseline", metavar="PATH", help="save scores as the accepted baseline")
+    s.add_argument("--check-baseline", metavar="PATH", help="exit 1 if any metric drops below this baseline")
     s.set_defaults(fn=cmd_eval)
 
     s = sub.add_parser("demo", help="record, compile and call the built-in fixture end to end")

@@ -32,6 +32,7 @@ record (HAR) -> compile (catalog.json) -> serve (MCP) / call (CLI)
 pip install -e ".[dev]"     # first time
 make test                   # pytest, must stay green, runs in ~2s, no network
 make eval                   # scoreboard across evals/*.json (fixtures, in-process, free)
+make check                  # lint + tests + fail if any eval metric drops below evals/baseline.json
 make demo                   # record -> compile -> call against the fake carrier portal
 portolan --help             # full CLI
 ```

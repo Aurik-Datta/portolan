@@ -27,7 +27,8 @@ the fixture's `app.state.expire_sessions()` to test re-login.
 | scenarios | end-to-end steps that behaved as expected |
 | score | mean of the five |
 
-`make baseline` saves current scores to `evals/baseline.json`. The `eval-runner` agent compares
+`make baseline` saves current scores to `evals/baseline.json`. `make check` (and CI) fails if any
+metric for an app in the baseline drops below it; apps not yet in the baseline are not gated. The `eval-runner` agent compares
 against it and flags regressions.
 
 ## Fixtures

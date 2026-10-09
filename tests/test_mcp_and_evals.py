@@ -4,7 +4,7 @@ from pathlib import Path
 import anyio
 import mcp.types as types
 
-from portolan.evals import run_eval
+from portolan.evals import EvalResult, regressions, run_eval
 from portolan.mcp_server import make_handlers
 
 EVALS = Path(__file__).parent.parent / "evals"
@@ -57,3 +57,10 @@ def test_every_eval_spec_runs(tmp_path):
     for spec in sorted(p for p in EVALS.glob("*.json") if p.name != "baseline.json"):
         result = run_eval(spec, workdir=tmp_path)
         assert 0.0 <= result.score <= 1.0
+
+
+def test_regressions_flag_drops_but_not_gains_or_new_apps():
+    result = EvalResult(app="portal", recall=1.0, precision=0.5, risk=1.0, auth=1.0, scenarios=1.0)
+    baseline = {"portal": {"recall": 0.8, "precision": 1.0, "risk": 1.0, "auth": 1.0, "scenarios": 1.0}}
+    assert regressions([result], baseline) == ["portal: precision 1.00 -> 0.50"]
+    assert regressions([result], {}) == []
