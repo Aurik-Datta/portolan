@@ -1,0 +1,18 @@
+{
+  "carrier_portal": {
+    "recall": 1.0,
+    "precision": 1.0,
+    "risk": 1.0,
+    "auth": 1.0,
+    "scenarios": 1.0,
+    "score": 1.0
+  },
+  "legacy_erp": {
+    "recall": 0.0,
+    "precision": 0.0,
+    "risk": 0.0,
+    "auth": 1.0,
+    "scenarios": 0.0,
+    "score": 0.2
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "app": "carrier_portal",
+  "description": "Fake P&C carrier broker portal: bearer login, policies, quotes, bind.",
+  "session": "portolan.testing.sessions:record_carrier_portal_session",
+  "fixture": "portolan.testing.carrier_portal:create_app",
+  "base_url": "http://portal.test",
+  "credentials": {"username": "broker@example.com", "password": "hunter2"},
+  "expect": {
+    "auth": true,
+    "operations": [
+      {"key": "GET /api/me", "risk": "read"},
+      {"key": "GET /api/policies", "risk": "read"},
+      {"key": "GET /api/policies/{*}", "risk": "read"},
+      {"key": "GET /api/policies/{*}/documents", "risk": "read"},
+      {"key": "POST /api/quotes", "risk": "write"},
+      {"key": "GET /api/quotes/{*}", "risk": "read"},
+      {"key": "POST /api/quotes/{*}/bind", "risk": "irreversible"}
+    ],
+    "must_not_include": ["/api/telemetry", "/api/auth/login", "/quotes/new", "/static/app.js", "/"]
+  },
+  "scenarios": [
+    {
+      "name": "browse policies",
+      "steps": [
+        {"op": "GET /api/policies", "query": {"status": "active"}, "expect_status": 200, "expect_path": "items.0.policy_number"},
+        {"op": "GET /api/policies/{*}", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200},
+        {"op": "GET /api/policies/{*}/documents", "path": ["{{steps.0.data.items.0.policy_number}}"], "expect_status": 200, "expect_path": "items.0.document_id"}
+      ]
+    },
+    {
+      "name": "quote and bind with confirmation",
+      "steps": [
+        {
+          "op": "POST /api/quotes",
+          "confirm": true,
+          "body": {
+            "line": "auto",
+            "insured": {"name": "Eval Person", "province": "ON", "date_of_birth": "1990-01-01"},
+            "vehicle": {"year": 2022, "make": "Mazda", "model": "3"},
+            "coverage": {"liability_limit": 1000000, "deductible": 500}
+          },
+          "expect_status": 200,
+          "expect_path": "quote_id"
+        },
+        {"op": "POST /api/quotes/{*}/bind", "path": ["{{steps.0.data.quote_id}}"], "body": {"effective_date": "2026-12-01", "payment_plan": "annual"}, "expect_dry_run": true},
+        {"op": "POST /api/quotes/{*}/bind", "path": ["{{steps.0.data.quote_id}}"], "confirm": true, "body": {"effective_date": "2026-12-01", "payment_plan": "annual"}, "expect_status": 200, "expect_path": "policy_number"}
+      ]
+    },
+    {
+      "name": "recovers from an expired session",
+      "steps": [
+        {"op": "GET /api/me", "expect_status": 200},
+        {"action": "expire_sessions"},
+        {"op": "GET /api/me", "expect_status": 200}
+      ]
+    }
+  ]
+}

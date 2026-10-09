@@ -1,0 +1,19 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+
+# Real recordings contain session tokens and customer data. Never commit them.
+recordings/*
+!recordings/README.md
+
+# Generated
+evals/results/
+catalogs/*
+!catalogs/README.md
+*.audit.jsonl
+portolan-audit.jsonl
+.env

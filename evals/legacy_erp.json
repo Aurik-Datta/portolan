@@ -1,0 +1,43 @@
+{
+  "app": "legacy_erp",
+  "description": "RPC-style legacy ERP: one POST /rpc endpoint, cookie session + CSRF header, app-level error envelopes. Expected to score poorly until the compiler learns body discriminators.",
+  "session": "portolan.testing.sessions:record_legacy_erp_session",
+  "fixture": "portolan.testing.legacy_erp:create_app",
+  "base_url": "http://erp.test",
+  "credentials": {"user": "clerk", "password": "ledger2009"},
+  "expect": {
+    "auth": true,
+    "operations": [
+      {"key": "POST /rpc [method=invoice.list]", "risk": "read"},
+      {"key": "POST /rpc [method=invoice.get]", "risk": "read"},
+      {"key": "POST /rpc [method=invoice.create]", "risk": "write"},
+      {"key": "POST /rpc [method=invoice.void]", "risk": "irreversible"}
+    ],
+    "must_not_include": ["/session", "/"]
+  },
+  "scenarios": [
+    {
+      "name": "read invoices",
+      "steps": [
+        {"op": "POST /rpc [method=invoice.list]", "body": {"params": {"status": "open"}}, "expect_status": 200, "expect_path": "result.0.id"},
+        {"op": "POST /rpc [method=invoice.get]", "body": {"params": {"id": "{{steps.0.data.result.0.id}}"}}, "expect_status": 200, "expect_path": "result.customer"}
+      ]
+    },
+    {
+      "name": "create then void with confirmation",
+      "steps": [
+        {"op": "POST /rpc [method=invoice.create]", "confirm": true, "body": {"params": {"customer": "Eval Corp", "amount": 50.0}}, "expect_status": 200, "expect_path": "result.id"},
+        {"op": "POST /rpc [method=invoice.void]", "body": {"params": {"id": "{{steps.0.data.result.id}}"}}, "expect_dry_run": true},
+        {"op": "POST /rpc [method=invoice.void]", "confirm": true, "body": {"params": {"id": "{{steps.0.data.result.id}}"}}, "expect_status": 200, "expect_path": "result.status"}
+      ]
+    },
+    {
+      "name": "recovers from an expired session",
+      "steps": [
+        {"op": "POST /rpc [method=invoice.list]", "body": {"params": {}}, "expect_status": 200},
+        {"action": "expire_sessions"},
+        {"op": "POST /rpc [method=invoice.list]", "body": {"params": {}}, "expect_status": 200}
+      ]
+    }
+  ]
+}
